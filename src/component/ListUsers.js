@@ -1,87 +1,120 @@
 import React, { Component } from 'react'
 import axios from "axios";
-import { makeStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TablePagination from '@material-ui/core/TablePagination';
-import TableRow from '@material-ui/core/TableRow';
+import MaterialTable from 'material-table';
+import { forwardRef } from 'react';
+import AddBox from '@material-ui/icons/AddBox';
+import ArrowDownward from '@material-ui/icons/ArrowDownward';
+import Check from '@material-ui/icons/Check';
+import ChevronLeft from '@material-ui/icons/ChevronLeft';
+import ChevronRight from '@material-ui/icons/ChevronRight';
+import Clear from '@material-ui/icons/Clear';
+import DeleteOutline from '@material-ui/icons/DeleteOutline';
+import Edit from '@material-ui/icons/Edit';
+import FilterList from '@material-ui/icons/FilterList';
+import FirstPage from '@material-ui/icons/FirstPage';
+import LastPage from '@material-ui/icons/LastPage';
+import Remove from '@material-ui/icons/Remove';
+import SaveAlt from '@material-ui/icons/SaveAlt';
+import Search from '@material-ui/icons/Search';
+import ViewColumn from '@material-ui/icons/ViewColumn';
+
+export default function MaterialTableDemo() {
+    const tableIcons = {
+        Add: forwardRef((props, ref) => <AddBox {...props} ref={ref}/>),
+        Check: forwardRef((props, ref) => <Check {...props} ref={ref}/>),
+        Clear: forwardRef((props, ref) => <Clear {...props} ref={ref}/>),
+        Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref}/>),
+        DetailPanel: forwardRef((props, ref) => <ChevronRight {...props} ref={ref}/>),
+        Edit: forwardRef((props, ref) => <Edit {...props} ref={ref}/>),
+        Export: forwardRef((props, ref) => <SaveAlt {...props} ref={ref}/>),
+        Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref}/>),
+        FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref}/>),
+        LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref}/>),
+        NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref}/>),
+        PreviousPage: forwardRef((props, ref) => <ChevronLeft {...props} ref={ref}/>),
+        ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref}/>),
+        Search: forwardRef((props, ref) => <Search {...props} ref={ref}/>),
+        SortArrow: forwardRef((props, ref) => <ArrowDownward {...props} ref={ref}/>),
+        ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref}/>),
+        ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref}/>)
+    };
+
+    const baseUrl = 'http://localhost:8080/api/v1/users';
 
 
-class ListUser extends Component {
-    constructor() {
-        super();
-        this.state  = {
-            rows: [],
-        };
-    }
 
-    componentDidMount() {
-        const username = 'nazarehturmina@gmail.com';
-        const password = 'supersecret';
-        const token = Buffer.from(`${username}:${password}`, 'utf8').toString('base64');
-        const url = 'http://localhost:8080/api/v1/users';
-        // const url = 'https://jsonplaceholder.typicode.com/users';
 
-        console.log('begin');
-        axios.get(url
-            ,{
-            headers: {
-                // 'Authorization':'Basic ${token}'
-                'Access-Control-Allow-Origin':'*'
+    const [state, setState] = React.useState({
+        columns: [
+            {field: 'id', title: 'ID', minWidth: 20,},
+            {field: 'email', title: 'Email'},
+            {field: 'firstName', title: 'First Name'},
+            {field: 'lastName', title: 'Last Name'},
+        ],
+        data: []
+
+    });
+
+
+    return (
+        <MaterialTable
+            title="Editable Example"
+            icons={tableIcons}
+            columns={state.columns}
+            options={{
+                search: true
             }}
-        ).then(response => {
-                    console.log(response.data);
-                    return this.setState({rows: response.data});
+            data={
+                query =>
+                new Promise((resolve, reject) => {
+                    axios.get(baseUrl,{headers: {'Access-Control-Allow-Origin': '*'}})
+                        .then(response  => {
+                            resolve({
+                                data: response.data.slice(query.page * query.pageSize,query.page * query.pageSize +5),
+                                page: query.page,
+                                totalCount: response.data.length // total row number
+                            });
+                        }
+                        );
                 })
-        console.log('END');
-    }
-    render() {
-        const columns = [
-            { id: 'id', label: 'ID', minWidth: 20 },
-            { id: 'firstName', label: 'First Name', minWidth: 80 },
-            { id: 'lastName', label: 'Last Name', minWidth: 200, format: value => value.toLocaleString(),},
-            { id: 'email', label: 'Email', minWidth: 170,format: value => value.toLocaleString(),},
-
-        ];
-
-        return (
-            <Table stickyHeader aria-label="sticky table">
-                <TableHead>
-                    <TableRow>
-                        {columns.map(column => (
-                            <TableCell
-                                key={column.id}
-                                align={column.align}
-                                style={{ minWidth: column.minWidth }}
-                            >
-                                {column.label}
-                            </TableCell>
-                        ))}
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                        {this.state.rows.map(row => {
-                                return (
-                                    <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                                        {columns.map(column => {
-                                            const value = row[column.id];
-                                            return (
-                                                <TableCell key={column.id} align={column.align}>
-                                                    {column.format && typeof value === 'number' ? column.format(value) : value}
-                                                </TableCell>
-                                            );
-                                        })}
-                                    </TableRow>
-                                );
-                            })}
-                    </TableBody>
-            </Table>
-        );
-    }
-}
-
-export default ListUser;
+            }
+            editable={{
+                onRowAdd: newData =>
+                    new Promise(resolve => {
+                        setTimeout(() => {
+                            resolve();
+                            setState(prevState => {
+                                const data = [...prevState.data];
+                                data.push(newData);
+                                return {...prevState, data};
+                            });
+                        }, 600);
+                    }),
+                onRowUpdate: (newData, oldData) =>
+                    new Promise(resolve => {
+                        setTimeout(() => {
+                            resolve();
+                            if (oldData) {
+                                setState(prevState => {
+                                    const data = [...prevState.data];
+                                    data[data.indexOf(oldData)] = newData;
+                                    return {...prevState, data};
+                                });
+                            }
+                        }, 600);
+                    }),
+                onRowDelete: oldData =>
+                    new Promise(resolve => {
+                        setTimeout(() => {
+                            resolve();
+                            setState(prevState => {
+                                const data = [...prevState.data];
+                                data.splice(data.indexOf(oldData), 1);
+                                return {...prevState, data};
+                            });
+                        }, 600);
+                    }),
+            }}
+        />
+    );
+};
