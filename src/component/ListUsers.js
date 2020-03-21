@@ -41,9 +41,6 @@ export default function MaterialTableDemo() {
 
     const baseUrl = 'http://localhost:8080/api/v1/users';
 
-
-
-
     const [state, setState] = React.useState({
         columns: [
             {field: 'id', title: 'ID', minWidth: 20,},
@@ -55,28 +52,41 @@ export default function MaterialTableDemo() {
 
     });
 
+    axios.get(baseUrl,{headers: {'Access-Control-Allow-Origin': '*'}})
+        .then(response  => {
+            response.data.forEach(value => state.data.push(value));
+        });
+
+    let filteredData = state.data;
 
     return (
         <MaterialTable
             title="Editable Example"
             icons={tableIcons}
             columns={state.columns}
-            options={{
-                search: true
-            }}
             data={
                 query =>
-                new Promise((resolve, reject) => {
-                    axios.get(baseUrl,{headers: {'Access-Control-Allow-Origin': '*'}})
-                        .then(response  => {
-                            resolve({
-                                data: response.data.slice(query.page * query.pageSize,query.page * query.pageSize +5),
-                                page: query.page,
-                                totalCount: response.data.length // total row number
-                            });
+                new Promise((resolve, reject) =>
+                    setTimeout(() => {
+                        if ( query.search !== '') {
+                            filteredData = state.data.filter(row =>
+                                row.id.toString().toLowerCase().includes(query.search.toLowerCase()) ||
+                                row.email.toLowerCase().includes(query.search.toLowerCase()) ||
+                                row.firstName.toLowerCase().includes(query.search.toLowerCase()) ||
+                                row.lastName.toLowerCase().includes(query.search.toLowerCase())
+                            );
                         }
-                        );
-                })
+                        else {
+                            filteredData = state.data;
+                        }
+                            resolve({
+                                data: filteredData
+                                    .slice(query.page * query.pageSize,query.page * query.pageSize +5),
+                                page: query.page,
+                                totalCount: filteredData.length // total row number
+                            })
+                    },600)
+                )
             }
             editable={{
                 onRowAdd: newData =>
