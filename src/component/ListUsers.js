@@ -43,17 +43,18 @@ export default function MaterialTableDemo() {
 
     const [state, setState] = React.useState({
         columns: [
-            {field: 'id', title: 'ID', minWidth: 20,},
+            {field: 'id', title: 'ID', minWidth: 10,},
             {field: 'email', title: 'Email'},
             {field: 'firstName', title: 'First Name'},
             {field: 'lastName', title: 'Last Name'},
+            {field: 'enabled', title: 'Enabled', type:'boolean'}
         ],
         data: []
-
     });
 
     axios.get(baseUrl,{headers: {'Access-Control-Allow-Origin': '*'}})
         .then(response  => {
+            state.data =[];
             response.data.forEach(value => state.data.push(value));
         });
 
@@ -81,11 +82,13 @@ export default function MaterialTableDemo() {
                         }
                             resolve({
                                 data: filteredData
-                                    .slice(query.page * query.pageSize,query.page * query.pageSize +5),
+                                    .slice(
+                                        query.page * query.pageSize,
+                                        query.page * query.pageSize + query.pageSize),
                                 page: query.page,
                                 totalCount: filteredData.length // total row number
                             })
-                    },600)
+                    },300)
                 )
             }
             editable={{
@@ -98,7 +101,7 @@ export default function MaterialTableDemo() {
                                 data.push(newData);
                                 return {...prevState, data};
                             });
-                        }, 600);
+                        }, 300);
                     }),
                 onRowUpdate: (newData, oldData) =>
                     new Promise(resolve => {
@@ -111,18 +114,19 @@ export default function MaterialTableDemo() {
                                     return {...prevState, data};
                                 });
                             }
-                        }, 600);
+                        }, 300);
                     }),
                 onRowDelete: oldData =>
                     new Promise(resolve => {
                         setTimeout(() => {
+                            axios.delete(baseUrl+'/'+oldData.id);
                             resolve();
                             setState(prevState => {
                                 const data = [...prevState.data];
                                 data.splice(data.indexOf(oldData), 1);
                                 return {...prevState, data};
                             });
-                        }, 600);
+                        }, 150);
                     }),
             }}
         />
